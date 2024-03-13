@@ -1,22 +1,20 @@
 package cmd
 
 import (
-	"github.com/ellioht/go-rest-api/internal/app"
+	"github.com/ellioht/go-rest-api/internal/server"
 	"github.com/spf13/cobra"
 )
 
-func ServeCmd(app *app.App) *cobra.Command {
-	serve := &cobra.Command{
+func Serve(server *server.Server) *cobra.Command {
+	return &cobra.Command{
 		Use:   "serve",
-		Short: "Start the API server",
+		Short: "RunAsync Application",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+			ctx := cmd.Context()
+			if err := server.Init(); err != nil {
+				return err
+			}
+			return server.Run(ctx)
 		},
 	}
-	return serve
-}
-
-func Serve(app *app.App) *cobra.Command {
-	serve := ServeCmd(app)
-	return serve
 }

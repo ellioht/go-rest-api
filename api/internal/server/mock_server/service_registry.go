@@ -42,3 +42,16 @@ func (s *ServiceRegistry) Fetch(service interface{}) error {
 	}
 	return fmt.Errorf("unknown service: %T", service)
 }
+
+func (s *ServiceRegistry) Modify(service interface{}, modifier func(interface{})) error {
+	if reflect.TypeOf(service).Kind() != reflect.Ptr || reflect.ValueOf(service).Elem().Kind() != reflect.Ptr {
+		return fmt.Errorf("input must be a pointer to a pointer, received: %T", service)
+	}
+
+	serviceType := reflect.ValueOf(service).Elem().Type()
+	if runningService, ok := s.services[serviceType]; ok {
+		modifier(runningService)
+		return nil
+	}
+	return fmt.Errorf("unknown service: %T", service)
+}
