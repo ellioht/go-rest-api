@@ -1,31 +1,55 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/ellioht/go-rest-api/config"
-	"github.com/ellioht/go-rest-api/internal/app"
+	"github.com/ellioht/go-rest-api/internal/server"
 	"github.com/spf13/cobra"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
-func RootCmd(app *app.App, cfg *config.Config) *cobra.Command {
-	cmd := &cobra.Command{
+func RootCmd(cfg *config.Config) *cobra.Command {
+	return &cobra.Command{
 		Use:              "root",
-		Short:            "rootCmd represents the base command when called without any subcommands",
+		Short:            "root is the root command for the application",
 		TraverseChildren: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			// cfg
+			cfgLoad, err := config.Load()
+			if err != nil {
+				return err
+			}
+			*cfg = *cfgLoad
+
 			return nil
 		},
 	}
-	return cmd
 }
 
-func Root(app *app.App, cfg *config.Config) *cobra.Command {
-	root := RootCmd(app, cfg)
-	if err := root.Execute(); err != nil {
+func Root() {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-c
+		cancel()
+	}()
+
+	cfg := &config.Config{}
+	rootCmd := RootCmd(cfg)
+
+	svr := &server.Server{
+		Config: cfg,
+	}
+
+	rootCmd.AddCommand(Serve(svr))
+
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	return root
 }

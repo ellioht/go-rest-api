@@ -14,6 +14,10 @@ type dependencies struct {
 	Issues *issues.Service
 }
 
+type ServiceList struct {
+	Issues *issues.Service
+}
+
 func NewMockServer(pool *pgxpool.Pool) *MockServer {
 	var deps dependencies
 
@@ -22,6 +26,8 @@ func NewMockServer(pool *pgxpool.Pool) *MockServer {
 	server := &MockServer{
 		Services: registry,
 	}
+
+	// mocks
 
 	// issues service
 	issuesDb := issues.NewDb(pool)
@@ -33,10 +39,6 @@ func NewMockServer(pool *pgxpool.Pool) *MockServer {
 
 	server.Deps = &deps
 	return server
-}
-
-type ServiceList struct {
-	Issues *issues.Service
 }
 
 func (s *MockServer) SetupServices(services ...string) *ServiceList {
